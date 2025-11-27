@@ -5,13 +5,7 @@ Office.onReady((info) => {
       const workbook = context.workbook;
       const sheet = workbook.worksheets.getActiveWorksheet();
 
-      // Prüfen, ob das Event unterstützt wird
-      if (!sheet.onSelectionChanged) {
-        showError("Diese Excel-Version unterstützt das Auswahl-Ereignis nicht (worksheet.onSelectionChanged fehlt).");
-        return;
-      }
-
-      // Ereignis registrieren: Auswahl geändert (auf Tabellenblatt-Ebene)
+      // Auswahl-Ereignis auf dem aktiven Blatt registrieren
       sheet.onSelectionChanged.add(handleSelectionChanged);
       await context.sync();
 
@@ -39,15 +33,15 @@ function showError(message) {
 }
 
 // Haupt-Handler bei Auswahländerung
+// Hinweis: eventArgs wird nicht verwendet, wir nehmen einfach die aktuell markierte Zelle
 async function handleSelectionChanged(eventArgs) {
   try {
     await Excel.run(async (context) => {
       const workbook = context.workbook;
       const sheet = workbook.worksheets.getActiveWorksheet();
 
-      // Range der aktuellen Auswahl
-      const range = sheet.getRange(eventArgs.address);
-
+      // Aktuelle Auswahl
+      const range = sheet.getSelectedRange();
       range.load(["columnIndex", "rowIndex", "format/fill/color"]);
       await context.sync();
 
@@ -129,7 +123,7 @@ async function handleSelectionChanged(eventArgs) {
   }
 }
 
-// Fehlerhandler: zeigt jetzt den Fehlertext im Panel
+// Fehlerhandler: schreibt den echten Fehlertext ins Panel
 function errorHandler(error) {
   console.error(error);
   let msg = "Unbekannter Fehler.";
