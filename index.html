@@ -210,20 +210,31 @@
           // D..O → Indexe:
           // 0=D, 1=E, 2=F, 3=G, 4=H, 5=I, 6=J, 7=K, 8=L, 9=M, 10=N, 11=O
 
-          // Für die Anzeige nutzen wir die formatierten Texte (t[..]),
-          // damit Datum / Zeit so aussehen wie im Excel-Format.
-          const start       = t[0];  // D
-          const ende        = t[1];  // E
-          const dauer       = t[2];  // F
-          const fachbereich = t[3];  // G
-          const kursnummer  = t[4];  // H
-          const kurs        = t[5];  // I
-          const teilnehmer  = t[6];  // J
-          const kursleiter  = t[7];  // K
-          const freigabe    = t[8];  // L
-          const rf          = t[9];  // M
-          const fahrzeuge   = t[10]; // N
-          const anlagen     = t[11]; // O
+          // Start / Ende formatiert, Dauer als Zahl (Rohwert)
+          const startText   = t[0];     // D formatiert
+          const endeText    = t[1];     // E formatiert
+          const dauerRaw    = v[2];     // F ROH (Zahl)
+          const fachbereich = t[3];     // G
+          const kursnummer  = t[4];     // H
+          const kurs        = t[5];     // I
+          const teilnehmer  = t[6];     // J
+          const kursleiter  = t[7];     // K
+          const freigabe    = t[8];     // L
+          const rf          = t[9];     // M
+          const fahrzeuge   = t[10];    // N
+          const anlagen     = t[11];    // O
+
+          // Dauer als „saubere“ Zahl anzeigen (falls z. B. 5 oder 5.0)
+          let dauerAnzeige = dauerRaw;
+          if (typeof dauerRaw === "number") {
+            // wenn ganze Zahl → ohne Nachkommastellen
+            if (Number.isInteger(dauerRaw)) {
+              dauerAnzeige = dauerRaw.toString();
+            } else {
+              // sonst max. 2 Nachkommastellen
+              dauerAnzeige = dauerRaw.toFixed(2);
+            }
+          }
 
           // Titel oben: Kursname (Spalte I), sonst "Kurs-Info"
           setTitle(kurs);
@@ -260,15 +271,15 @@
                 <div class="section-title">Zeit</div>
                 <div class="info-row">
                   <div class="label">Start</div>
-                  <div class="value">${esc(start)}</div>
+                  <div class="value">${esc(startText)}</div>
                 </div>
                 <div class="info-row">
                   <div class="label">Ende</div>
-                  <div class="value">${esc(ende)}</div>
+                  <div class="value">${esc(endeText)}</div>
                 </div>
                 <div class="info-row">
                   <div class="label">Dauer</div>
-                  <div class="value">${esc(dauer)}</div>
+                  <div class="value">${esc(dauerAnzeige)}</div>
                 </div>
               </div>
 
