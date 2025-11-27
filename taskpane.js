@@ -3,15 +3,16 @@ Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
     Excel.run(async (context) => {
       const workbook = context.workbook;
+      const sheet = workbook.worksheets.getActiveWorksheet();
 
-      // Prüfen, ob das Event überhaupt unterstützt wird
-      if (!workbook.onSelectionChanged) {
-        clearPanel("Diese Excel-Version unterstützt das Auswahl-Ereignis nicht.");
+      // Prüfen, ob das Event unterstützt wird
+      if (!sheet.onSelectionChanged) {
+        showError("Diese Excel-Version unterstützt das Auswahl-Ereignis nicht (worksheet.onSelectionChanged fehlt).");
         return;
       }
 
-      // Ereignis registrieren: Auswahl geändert
-      workbook.onSelectionChanged.add(handleSelectionChanged);
+      // Ereignis registrieren: Auswahl geändert (auf Tabellenblatt-Ebene)
+      sheet.onSelectionChanged.add(handleSelectionChanged);
       await context.sync();
 
       clearPanel("Zellmarkierung in Spalte P oder rechts wählen.");
@@ -28,13 +29,23 @@ function clearPanel(message) {
   div.textContent = message || "Keine Anzeige für diese Zelle.";
 }
 
+// Fehler-Text im Panel anzeigen
+function showError(message) {
+  const div = document.getElementById("info");
+  if (!div) return;
+
+  div.className = "empty-hint";
+  div.textContent = "Fehler: " + message;
+}
+
 // Haupt-Handler bei Auswahländerung
 async function handleSelectionChanged(eventArgs) {
   try {
-    // WICHTIG: HIER darf NICHT eventArgs als Context verwendet werden
     await Excel.run(async (context) => {
       const workbook = context.workbook;
-      const sheet = workbook.worksheets.getItem(eventArgs.worksheetId);
+      const sheet = workbook.worksheets.getActiveWorksheet();
+
+      // Range der aktuellen Auswahl
       const range = sheet.getRange(eventArgs.address);
 
       range.load(["columnIndex", "rowIndex", "format/fill/color"]);
@@ -118,7 +129,17 @@ async function handleSelectionChanged(eventArgs) {
   }
 }
 
+// Fehlerhandler: zeigt jetzt den Fehlertext im Panel
 function errorHandler(error) {
   console.error(error);
-  clearPanel("Fehler im Add-In. Details in der Browser-Konsole.");
+  let msg = "Unbekannter Fehler.";
+
+  if (error && error.message) {
+    msg = error.message;
+  }
+  if (error && error.debugInfo && error.debugInfo.errorLocation) {
+    msg += " (Ort: " + error.debugInfo.errorLocation + ")";
+  }
+
+  showError(msg);
 }
