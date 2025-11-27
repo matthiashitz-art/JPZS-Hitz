@@ -76,7 +76,7 @@
 
           // aktuelle Auswahl über das Workbook holen
           const range = workbook.getSelectedRange();
-          range.load(["columnIndex", "rowIndex", "format/fill/color"]);
+          range.load(["columnIndex", "rowIndex", "values"]);
           await context.sync();
 
           const colIndex = range.columnIndex; // 0-basiert (A=0, B=1, ..., P=15)
@@ -88,18 +88,10 @@
             return;
           }
 
-          // 2) Farbfilter: bestimmte Farben sollen NICHT angezeigt werden
-          let rawColor = range.format.fill.color || "";
-          let normalized = rawColor.toString().replace("#", "").toUpperCase();
-
-          const blockedColors = [
-            "FFFFFF", // weiß
-            "404040", // dunkelgrau
-            "A6A6A6"  // mittelgrau
-          ];
-
-          if (blockedColors.includes(normalized)) {
-            clearPanel("Für Zellen mit dieser Farbe wird nichts angezeigt.");
+          // 2) Nur anzeigen, wenn die gewählte Zelle Text enthält
+          const cellValue = range.values[0][0];
+          if (typeof cellValue !== "string" || cellValue.trim() === "") {
+            clearPanel("Für Zellen ohne Text wird nichts angezeigt.");
             return;
           }
 
