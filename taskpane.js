@@ -5,7 +5,7 @@ Office.onReady((info) => {
       const workbook = context.workbook;
       const sheet = workbook.worksheets.getActiveWorksheet();
 
-      // prüfen, ob das Event unterstützt wird
+      // Prüfen, ob das Auswahl-Ereignis unterstützt wird
       if (!sheet.onSelectionChanged || !sheet.onSelectionChanged.add) {
         showError("Dieses Excel unterstützt 'onSelectionChanged' nicht.");
         return;
@@ -43,10 +43,9 @@ async function handleSelectionChanged(eventArgs) {
   try {
     await Excel.run(async (context) => {
       const workbook = context.workbook;
-      const sheet = workbook.worksheets.getActiveWorksheet();
 
-      // aktuelle Auswahl
-      const range = sheet.getSelectedRange();
+      // aktuelle Auswahl über das Workbook holen
+      const range = workbook.getSelectedRange();
       range.load(["columnIndex", "rowIndex", "format/fill/color"]);
       await context.sync();
 
@@ -76,6 +75,7 @@ async function handleSelectionChanged(eventArgs) {
 
       // 3) Daten der gleichen Zeile aus D:O holen
       const rowNumber = rowIndex + 1; // A1-Notation ist 1-basiert
+      const sheet = workbook.worksheets.getActiveWorksheet();
       const rowRange = sheet.getRange(`D${rowNumber}:O${rowNumber}`);
       rowRange.load("values");
       await context.sync();
@@ -103,6 +103,7 @@ async function handleSelectionChanged(eventArgs) {
       const esc = (val) =>
         val === null || val === undefined || val === "" ? "-" : val;
 
+      // Reihenfolge: G, H, I, D, E, F, K, J, M, N, O, L
       div.className = "";
       div.innerHTML = `
         <div class="info-row"><span class="label">Fachbereich:</span> ${esc(fachbereich)}</div>
