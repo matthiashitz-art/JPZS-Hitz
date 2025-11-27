@@ -5,6 +5,12 @@ Office.onReady((info) => {
       const workbook = context.workbook;
       const sheet = workbook.worksheets.getActiveWorksheet();
 
+      // prüfen, ob das Event unterstützt wird
+      if (!sheet.onSelectionChanged || !sheet.onSelectionChanged.add) {
+        showError("Dieses Excel unterstützt 'onSelectionChanged' nicht.");
+        return;
+      }
+
       // Auswahl-Ereignis auf dem aktiven Blatt registrieren
       sheet.onSelectionChanged.add(handleSelectionChanged);
       await context.sync();
@@ -33,14 +39,13 @@ function showError(message) {
 }
 
 // Haupt-Handler bei Auswahländerung
-// Hinweis: eventArgs wird nicht verwendet, wir nehmen einfach die aktuell markierte Zelle
 async function handleSelectionChanged(eventArgs) {
   try {
     await Excel.run(async (context) => {
       const workbook = context.workbook;
       const sheet = workbook.worksheets.getActiveWorksheet();
 
-      // Aktuelle Auswahl
+      // aktuelle Auswahl
       const range = sheet.getSelectedRange();
       range.load(["columnIndex", "rowIndex", "format/fill/color"]);
       await context.sync();
@@ -56,10 +61,8 @@ async function handleSelectionChanged(eventArgs) {
 
       // 2) Farbfilter: bestimmte Farben sollen NICHT angezeigt werden
       let rawColor = range.format.fill.color || "";
-      // z.B. "#FFFFFF" → "FFFFFF"
       let normalized = rawColor.toString().replace("#", "").toUpperCase();
 
-      // Deine gesperrten Farben:
       const blockedColors = [
         "FFFFFF", // weiß
         "404040", // dunkelgrau
@@ -94,8 +97,6 @@ async function handleSelectionChanged(eventArgs) {
       const fahrzeuge   = v[10]; // N
       const anlagen     = v[11]; // O
 
-      // 4) HTML in gewünschter Reihenfolge:
-      // G, H, I, D, E, F, K, J, M, N, O, L
       const div = document.getElementById("info");
       if (!div) return;
 
@@ -123,7 +124,7 @@ async function handleSelectionChanged(eventArgs) {
   }
 }
 
-// Fehlerhandler: schreibt den echten Fehlertext ins Panel
+// Fehlerhandler: schreibt den Fehlertext ins Panel
 function errorHandler(error) {
   console.error(error);
   let msg = "Unbekannter Fehler.";
