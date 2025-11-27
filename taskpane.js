@@ -3,16 +3,15 @@ Office.onReady((info) => {
   if (info.host === Office.HostType.Excel) {
     Excel.run(async (context) => {
       const workbook = context.workbook;
-      const sheet = workbook.worksheets.getActiveWorksheet();
 
-      // Prüfen, ob das Auswahl-Ereignis unterstützt wird
-      if (!sheet.onSelectionChanged || !sheet.onSelectionChanged.add) {
-        showError("Dieses Excel unterstützt 'onSelectionChanged' nicht.");
+      // prüfen, ob das Auswahl-Ereignis unterstützt wird
+      if (!workbook.onSelectionChanged || !workbook.onSelectionChanged.add) {
+        showError("Dieses Excel unterstützt 'workbook.onSelectionChanged' nicht.");
         return;
       }
 
-      // Auswahl-Ereignis auf dem aktiven Blatt registrieren
-      sheet.onSelectionChanged.add(handleSelectionChanged);
+      // Auswahl-Ereignis auf Workbook-Ebene registrieren
+      workbook.onSelectionChanged.add(handleSelectionChanged);
       await context.sync();
 
       clearPanel("Zellmarkierung in Spalte P oder rechts wählen.");
