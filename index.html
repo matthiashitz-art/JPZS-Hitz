@@ -111,7 +111,7 @@
 </head>
 <body>
   <div class="panel">
-    <h1>Kurs-Info</h1>
+    <h1><span id="title-bar">Kurs-Info</span></h1>
     <div class="subline" id="hint">
       Zellmarkierung in Spalte P oder rechts wählen.
     </div>
@@ -121,6 +121,13 @@
   </div>
 
   <script>
+    // Titel setzen (oben im Panel)
+    function setTitle(title) {
+      const el = document.getElementById("title-bar");
+      if (!el) return;
+      el.textContent = title && String(title).trim() !== "" ? String(title) : "Kurs-Info";
+    }
+
     // Hinweis-/Statuszeile setzen
     function setHint(message) {
       const hint = document.getElementById("hint");
@@ -175,6 +182,7 @@
 
           // 1) Nur ab Spalte P (Index 15) reagieren
           if (colIndex < 15) {
+            setTitle("Kurs-Info");
             setHint("Zellmarkierung in Spalte P oder rechts wählen.");
             clearPanel("Noch keine passende Zelle ausgewählt.");
             return;
@@ -184,39 +192,47 @@
           const cellValue = range.values[0][0];
           if (typeof cellValue !== "string" || cellValue.trim() === "") {
             setHint("Zelle enthält keinen Text – keine Detailanzeige.");
+            setTitle("Kurs-Info");
             clearPanel("Für Zellen ohne Text wird nichts angezeigt.");
             return;
           }
 
-          // 3) Daten der gleichen Zeile aus D:O holen
+          // 3) Daten der gleichen Zeile aus D:O holen (Werte + formatierten Text)
           const rowNumber = rowIndex + 1; // A1-Notation ist 1-basiert
           const sheet = workbook.worksheets.getActiveWorksheet();
           const rowRange = sheet.getRange(`D${rowNumber}:O${rowNumber}`);
-          rowRange.load("values");
+          rowRange.load(["values", "text"]);
           await context.sync();
 
-          const v = rowRange.values[0];
+          const v = rowRange.values[0]; // rohe Werte
+          const t = rowRange.text[0];   // formatiert wie in Excel angezeigt
+
           // D..O → Indexe:
           // 0=D, 1=E, 2=F, 3=G, 4=H, 5=I, 6=J, 7=K, 8=L, 9=M, 10=N, 11=O
 
-          const start       = v[0];  // D
-          const ende        = v[1];  // E
-          const dauer       = v[2];  // F
-          const fachbereich = v[3];  // G
-          const kursnummer  = v[4];  // H
-          const kurs        = v[5];  // I
-          const teilnehmer  = v[6];  // J
-          const kursleiter  = v[7];  // K
-          const freigabe    = v[8];  // L
-          const rf          = v[9];  // M
-          const fahrzeuge   = v[10]; // N
-          const anlagen     = v[11]; // O
+          // Für die Anzeige nutzen wir die formatierten Texte (t[..]),
+          // damit Datum / Zeit so aussehen wie im Excel-Format.
+          const start       = t[0];  // D
+          const ende        = t[1];  // E
+          const dauer       = t[2];  // F
+          const fachbereich = t[3];  // G
+          const kursnummer  = t[4];  // H
+          const kurs        = t[5];  // I
+          const teilnehmer  = t[6];  // J
+          const kursleiter  = t[7];  // K
+          const freigabe    = t[8];  // L
+          const rf          = t[9];  // M
+          const fahrzeuge   = t[10]; // N
+          const anlagen     = t[11]; // O
+
+          // Titel oben: Kursname (Spalte I), sonst "Kurs-Info"
+          setTitle(kurs);
 
           const info = document.getElementById("info");
           if (!info) return;
 
           const esc = (val) =>
-            val === null || val === undefined || val === "" ? "-" : val;
+            val === null || val === undefined || String(val).trim() === "" ? "-" : String(val);
 
           setHint(`Zeile ${rowNumber} · Ausgewählte Zelle enthält: "${cellValue}"`);
 
@@ -312,6 +328,7 @@
           workbook.onSelectionChanged.add(handleSelectionChanged);
           await context.sync();
 
+          setTitle("Kurs-Info");
           clearPanel("Noch keine Kurszeile ausgewählt.");
         }).catch(errorHandler);
       }
