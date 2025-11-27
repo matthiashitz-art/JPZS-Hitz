@@ -9,50 +9,141 @@
 
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
       font-size: 13px;
-      margin: 8px;
+      margin: 0;
+      padding: 12px;
+      background: #f3f4f6;
+      color: #111827;
     }
+
+    .panel {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.12);
+      border: 1px solid #e5e7eb;
+    }
+
     h1 {
       font-size: 14px;
-      margin-bottom: 6px;
+      margin: 0 0 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #111827;
     }
+
+    h1::before {
+      content: "";
+      width: 4px;
+      height: 16px;
+      border-radius: 999px;
+      background: #2563eb;
+    }
+
+    .subline {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+
+    .sections {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .section {
+      padding: 6px 8px;
+      border-radius: 8px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
     .info-row {
-      margin-bottom: 3px;
+      display: flex;
+      align-items: baseline;
+      margin-bottom: 2px;
     }
+
+    .info-row:last-child {
+      margin-bottom: 0;
+    }
+
     .label {
-      font-weight: bold;
-      display: inline-block;
-      width: 90px;
+      font-weight: 600;
+      font-size: 12px;
+      color: #374151;
+      min-width: 90px;
     }
+
+    .value {
+      font-size: 12px;
+      color: #111827;
+      flex: 1;
+      word-break: break-word;
+    }
+
     .empty-hint {
-      color: #888;
+      color: #6b7280;
       font-style: italic;
-      margin-top: 6px;
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .error {
+      color: #b91c1c;
+      font-style: normal;
     }
   </style>
 </head>
 <body>
-  <h1>Kurs-Info</h1>
-  <div id="info" class="empty-hint">
-    Zellmarkierung in Spalte P oder rechts wählen.
+  <div class="panel">
+    <h1>Kurs-Info</h1>
+    <div class="subline" id="hint">
+      Zellmarkierung in Spalte P oder rechts wählen.
+    </div>
+    <div id="info" class="empty-hint">
+      Noch keine Kurszeile ausgewählt.
+    </div>
   </div>
 
   <script>
+    // Hinweis-/Statuszeile setzen
+    function setHint(message) {
+      const hint = document.getElementById("hint");
+      if (!hint) return;
+      hint.textContent = message;
+    }
+
     // Panel leeren oder Hinweistext setzen
     function clearPanel(message) {
-      const div = document.getElementById("info");
-      if (!div) return;
-      div.className = "empty-hint";
-      div.textContent = message || "Keine Anzeige für diese Zelle.";
+      const info = document.getElementById("info");
+      if (!info) return;
+
+      info.className = "empty-hint";
+      info.textContent = message || "Keine Anzeige für diese Zelle.";
     }
 
     // Fehler-Text im Panel anzeigen
     function showError(message) {
-      const div = document.getElementById("info");
-      if (!div) return;
-      div.className = "empty-hint";
-      div.textContent = "Fehler: " + message;
+      const info = document.getElementById("info");
+      if (!info) return;
+
+      info.className = "empty-hint error";
+      info.textContent = "Fehler: " + message;
     }
 
     // Fehlerhandler: schreibt Fehlertext ins Panel
@@ -84,13 +175,15 @@
 
           // 1) Nur ab Spalte P (Index 15) reagieren
           if (colIndex < 15) {
-            clearPanel("Zellmarkierung in Spalte P oder rechts wählen.");
+            setHint("Zellmarkierung in Spalte P oder rechts wählen.");
+            clearPanel("Noch keine passende Zelle ausgewählt.");
             return;
           }
 
           // 2) Nur anzeigen, wenn die gewählte Zelle Text enthält
           const cellValue = range.values[0][0];
           if (typeof cellValue !== "string" || cellValue.trim() === "") {
+            setHint("Zelle enthält keinen Text – keine Detailanzeige.");
             clearPanel("Für Zellen ohne Text wird nichts angezeigt.");
             return;
           }
@@ -119,27 +212,83 @@
           const fahrzeuge   = v[10]; // N
           const anlagen     = v[11]; // O
 
-          const div = document.getElementById("info");
-          if (!div) return;
+          const info = document.getElementById("info");
+          if (!info) return;
 
           const esc = (val) =>
             val === null || val === undefined || val === "" ? "-" : val;
 
-          // Reihenfolge: G, H, I, D, E, F, K, J, M, N, O, L
-          div.className = "";
-          div.innerHTML = `
-            <div class="info-row"><span class="label">Fachbereich:</span> ${esc(fachbereich)}</div>
-            <div class="info-row"><span class="label">Kursnummer:</span> ${esc(kursnummer)}</div>
-            <div class="info-row"><span class="label">Kurs:</span> ${esc(kurs)}</div>
-            <div class="info-row"><span class="label">Start:</span> ${esc(start)}</div>
-            <div class="info-row"><span class="label">Ende:</span> ${esc(ende)}</div>
-            <div class="info-row"><span class="label">Dauer:</span> ${esc(dauer)}</div>
-            <div class="info-row"><span class="label">Kursleiter:</span> ${esc(kursleiter)}</div>
-            <div class="info-row"><span class="label">Teilnehmer:</span> ${esc(teilnehmer)}</div>
-            <div class="info-row"><span class="label">RF:</span> ${esc(rf)}</div>
-            <div class="info-row"><span class="label">Fahrzeuge:</span> ${esc(fahrzeuge)}</div>
-            <div class="info-row"><span class="label">Anlagen:</span> ${esc(anlagen)}</div>
-            <div class="info-row"><span class="label">Freigabe:</span> ${esc(freigabe)}</div>
+          setHint(`Zeile ${rowNumber} · Ausgewählte Zelle enthält: "${cellValue}"`);
+
+          info.className = "";
+          info.innerHTML = `
+            <div class="sections">
+
+              <div class="section">
+                <div class="section-title">Kurs</div>
+                <div class="info-row">
+                  <div class="label">Fachbereich</div>
+                  <div class="value">${esc(fachbereich)}</div>
+                </div>
+                <div class="info-row">
+                  <div class="label">Kursnummer</div>
+                  <div class="value">${esc(kursnummer)}</div>
+                </div>
+                <div class="info-row">
+                  <div class="label">Kurs</div>
+                  <div class="value">${esc(kurs)}</div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title">Zeit</div>
+                <div class="info-row">
+                  <div class="label">Start</div>
+                  <div class="value">${esc(start)}</div>
+                </div>
+                <div class="info-row">
+                  <div class="label">Ende</div>
+                  <div class="value">${esc(ende)}</div>
+                </div>
+                <div class="info-row">
+                  <div class="label">Dauer</div>
+                  <div class="value">${esc(dauer)}</div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title">Personen</div>
+                <div class="info-row">
+                  <div class="label">Kursleiter</div>
+                  <div class="value">${esc(kursleiter)}</div>
+                </div>
+                <div class="info-row">
+                  <div class="label">Teilnehmer</div>
+                  <div class="value">${esc(teilnehmer)}</div>
+                </div>
+                <div class="info-row">
+                  <div class="label">RF</div>
+                  <div class="value">${esc(rf)}</div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title">Ressourcen</div>
+                <div class="info-row">
+                  <div class="label">Fahrzeuge</div>
+                  <div class="value">${esc(fahrzeuge)}</div>
+                </div>
+                <div class="info-row">
+                  <div class="label">Anlagen</div>
+                  <div class="value">${esc(anlagen)}</div>
+                </div>
+                <div class="info-row">
+                  <div class="label">Freigabe</div>
+                  <div class="value">${esc(freigabe)}</div>
+                </div>
+              </div>
+
+            </div>
           `;
         });
       } catch (error) {
@@ -163,7 +312,7 @@
           workbook.onSelectionChanged.add(handleSelectionChanged);
           await context.sync();
 
-          clearPanel("Zellmarkierung in Spalte P oder rechts wählen.");
+          clearPanel("Noch keine Kurszeile ausgewählt.");
         }).catch(errorHandler);
       }
     });
